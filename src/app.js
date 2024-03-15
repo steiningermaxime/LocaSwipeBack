@@ -25,7 +25,7 @@ db.connect(err => {
 });
 
 // Importation et utilisation des routes
-const indexRoutes = require('./api/routes/routes')(db);
+const indexRoutes = require('./api/routes/routes')(db); 
 app.use('/api', indexRoutes);
 
 
