@@ -39,3 +39,15 @@ app.get('/', (req, res) => {
 app.listen(port, () => {
   console.log(`App listening at http://localhost:${port}`);
 });
+// Après toutes les routes
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  
+  // Gestion de l'erreur de doublon spécifique à MySQL
+  if (err.code === 'ER_DUP_ENTRY' || err.errno === 1062) {
+    res.status(409).send('Erreur : un enregistrement similaire existe déjà.');
+  } else {
+    // Pour toutes les autres erreurs non gérées
+    res.status(500).send('Une erreur est survenue.');
+  }
+});
