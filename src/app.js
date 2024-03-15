@@ -25,11 +25,9 @@ db.connect(err => {
 });
 
 // Importation et utilisation des routes
-const userRoutes = require('./api/routes/users/userRoutes')(db);
-const authRoutes = require('./api/routes/authRoutes')(db);
+const indexRoutes = require('./api/routes/routes')(db);
+app.use('/api', indexRoutes);
 
-app.use('/api/users', userRoutes);
-app.use('/api/auth', authRoutes);
 
 // Route de base pour tester que l'API fonctionne
 app.get('/', (req, res) => {
