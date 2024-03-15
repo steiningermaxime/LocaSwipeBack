@@ -1,61 +1,12 @@
 const express = require('express');
+const userController = require('../../controllers/users/userController');
+const router = express.Router();
 
-module.exports = function(db) {
-  const router = express.Router();
+module.exports = (db) => {
+    router.get('/', (req, res) => userController.getAllUsers(req, res, db));
+    router.get('/:id', (req, res) => userController.getUserById(req, res, db));
+    router.put('/:id', (req, res) => userController.updateUser(req, res, db));
+    router.delete('/:id', (req, res) => userController.deleteUser(req, res, db));
 
-  // Récupérer tous les utilisateurs
-  router.get('/', (req, res) => {
-    db.query('SELECT * FROM users', (err, results) => {
-      if (err) {
-        console.error(err);
-        return res.status(500).send('Erreur lors de la récupération des utilisateurs');
-      }
-      res.json(results);
-    });
-  });
-
-
- // Créer un nouvel utilisateur
-router.post('/', (req, res, next) => {
-  const { firstname, email } = req.body;
-  db.query('INSERT INTO users (firstname, email) VALUES (?, ?)', [firstname, email], (err, results) => {
-    if (err) {
-      return next(err); 
-    }
-    res.status(201).send('Utilisateur créé');
-  });
-});
-
-  // Mettre à jour un utilisateur
-  router.put('/:id', (req, res) => {
-    const { firstname, email } = req.body;
-    const { id } = req.params;
-    db.query('UPDATE users SET firstname = ?, email = ? WHERE id = ?', [firstname, email, id], (err, results) => {
-      if (err) {
-        console.error(err);
-        return res.status(500).send('Erreur lors de la mise à jour de l’utilisateur');
-      }
-      if (results.affectedRows === 0) {
-        return res.status(404).send('Utilisateur non trouvé');
-      }
-      res.send('Utilisateur mis à jour');
-    });
-  });
-
-  // Supprimer un utilisateur
-  router.delete('/:id', (req, res) => {
-    const { id } = req.params;
-    db.query('DELETE FROM users WHERE id = ?', [id], (err, results) => {
-      if (err) {
-        console.error(err);
-        return res.status(500).send('Erreur lors de la suppression de l’utilisateur');
-      }
-      if (results.affectedRows === 0) {
-        return res.status(404).send('Utilisateur non trouvé');
-      }
-      res.send('Utilisateur supprimé');
-    });
-  });
-
-  return router;
+    return router;
 };
