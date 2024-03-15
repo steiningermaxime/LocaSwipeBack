@@ -34,20 +34,34 @@ exports.login = async (req, res, db) => {
 };
 
 exports.getAllUsers = async (req, res, db) => {
-    db.query('SELECT * FROM users', (error, results) => {
+    const query = `
+        SELECT u.id, u.firstname, u.lastname, u.email, u.birthdate, u.avatar, r.type AS role
+        FROM users u
+        LEFT JOIN attribute a ON u.id = a.id_user
+        LEFT JOIN role r ON a.id_role = r.id
+    `;
+    db.query(query, (error, results) => {
         if (error) {
-            console.error('Erreur lors de la récupération des utilisateurs:', error);
+            console.error('Erreur lors de la récupération des utilisateurs et de leurs rôles:', error);
             return res.status(500).send('Erreur lors de la récupération des utilisateurs.');
         }
         res.json(results);
     });
 };
 
+
 exports.getUserById = async (req, res, db) => {
     const { id } = req.params;
-    db.query('SELECT * FROM users WHERE id = ?', [id], (error, results) => {
+    const query = `
+        SELECT u.id, u.firstname, u.lastname, u.email, u.birthdate, u.avatar, r.type AS role
+        FROM users u
+        LEFT JOIN attribute a ON u.id = a.id_user
+        LEFT JOIN role r ON a.id_role = r.id
+        WHERE u.id = ?
+    `;
+    db.query(query, [id], (error, results) => {
         if (error) {
-            console.error('Erreur lors de la récupération de l’utilisateur:', error);
+            console.error('Erreur lors de la récupération de l’utilisateur et de son rôle:', error);
             return res.status(500).send('Erreur lors de la récupération de l’utilisateur.');
         }
         if (results.length === 0) {
@@ -56,6 +70,7 @@ exports.getUserById = async (req, res, db) => {
         res.json(results[0]);
     });
 };
+
 
 exports.updateUser = async (req, res, db) => {
     const { id } = req.params;
