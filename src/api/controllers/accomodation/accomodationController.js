@@ -13,7 +13,7 @@ exports.getAllAccommodations = (req, res, db) => {
     }
     // Récupération de la liste des accommodations depuis la base de données
     const query = `
-      SELECT * FROM accommodation
+      SELECT * FROM accommodations
     `;
     db.query(query, (error, results) => {
       if (error) {
