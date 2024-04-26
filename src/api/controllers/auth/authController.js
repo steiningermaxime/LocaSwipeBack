@@ -1,10 +1,12 @@
 const bcrypt = require('bcrypt');
+const { json } = require('body-parser');
 const jwt = require('jsonwebtoken');
 
 exports.register = async (req, res, db) => {
     const { firstname, lastname, email, password, roleType } = req.body; // Assurez-vous que roleType est bien envoyé
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
+        return res.json({message: req.body});
         
         // Vérifie d'abord l'existence du rôle
         db.query('SELECT id FROM role WHERE type = ?', [roleType], async (error, roleResults) => {
