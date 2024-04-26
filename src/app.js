@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const cors = require('cors');
 const mysql = require('mysql2');
 const swaggerUi = require('swagger-ui-express');
 const YAML = require('yamljs');
@@ -8,6 +9,7 @@ const swaggerDocument = YAML.load('./swagger.yaml');
 const app = express();
 const port = process.env.PORT || 3000;
 
+app.use(cors()); 
 app.use(express.json());
 
 const db = mysql.createConnection({
