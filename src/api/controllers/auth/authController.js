@@ -45,15 +45,17 @@ exports.register = async (req, res, db) => {
 
 exports.login = async (req, res, db) => {
     const { email, password } = req.body;
-    db.query('SELECT * FROM users WHERE email = ?', [email], async (error, results) => {
-        if (error) {
-            console.error('Erreur lors de la connexion:', error);
-            return res.status(500).send('Erreur lors de la connexion.');
-        }
-        if (results.length === 0 || !(await bcrypt.compare(password, results[0].password))) {
-            return res.status(401).send("Email ou mot de passe incorrect.");
-        }
-        const token = jwt.sign({ id: results[0].id }, process.env.JWT_SECRET, { expiresIn: '24h' });
-        res.status(200).json({ message: "Connexion réussie.", token });
+    db.query('SELECT users.id, users.email, users.password, role.type AS role FROM users INNER JOIN attribute ON users.id = attribute.id_user INNER JOIN role ON attribute.id_role = role.id WHERE users.email = ?', [email], async (error, results) => {
+      if (error) {
+        console.error('Erreur lors de la connexion:', error);
+        return res.status(500).send('Erreur lors de la connexion.');
+      }
+      if (results.length === 0 || !(await bcrypt.compare(password, results[0].password))) {
+        return res.status(401).send("Email ou mot de passe incorrect.");
+      }
+      const { id, email: userEmail, password: userPassword, role } = results[0];
+      const token = jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: '24h' });
+      res.status(200).json({ message: "Connexion réussie.", token, role });
     });
-};
+  };
+  
