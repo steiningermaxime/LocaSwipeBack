@@ -5,11 +5,14 @@ const mysql = require('mysql2');
 const swaggerUi = require('swagger-ui-express');
 const YAML = require('yamljs');
 const swaggerDocument = YAML.load('./swagger.yaml');
+const cloudinary = require('cloudinary').v2;
+
+
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(cors()); 
+app.use(cors());
 app.use(express.json());
 
 const db = mysql.createConnection({
@@ -26,7 +29,11 @@ db.connect(err => {
     }
     console.log('Connecté à la base de données MySQL');
 });
-
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+  });
 const indexRoutes = require('./api/routes/routes')(db);
 app.use('/api', indexRoutes);
 
