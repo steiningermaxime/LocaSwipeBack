@@ -1,6 +1,7 @@
 exports.getAllAccommodations = (req, res, db) => {
   const query = `
-    SELECT id, adress, city, rent, disponibility, id_user, image FROM accommodations
+    SELECT id, adress, city, rent, disponibility, id_user, image, surface_area, description, property_type
+    FROM accommodations
   `;
   db.query(query, (error, results) => {
     if (error) {
@@ -10,6 +11,7 @@ exports.getAllAccommodations = (req, res, db) => {
     res.json(results);
   });
 };
+
 
 exports.likeAccommodation = (req, res, db) => {
   const accommodationId = req.params.id;
