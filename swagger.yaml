@@ -155,6 +155,35 @@ paths:
                 items:
                   $ref: "#/components/schemas/Accommodation"
 
+  /accommodations/{id}/like:
+    post:
+      tags:
+        - Accommodations
+      summary: Like an accommodation
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id_user:
+                  type: integer
+                  description: ID of the user liking the accommodation
+      responses:
+        "201":
+          description: Like added successfully
+        "400":
+          description: User ID is required
+        "500":
+          description: Error while adding like
+
 components:
   schemas:
     User:
