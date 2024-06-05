@@ -4,11 +4,14 @@ const router = express.Router();
 module.exports = (db) => {
   const userRoutes = require('./users/userRoutes')(db);
   const authRoutes = require('./auth/authRoutes')(db);
-  const accommodationRoutes = require('./accomodation/accomodationRoutes')(db); 
+  const accomodationRoutes = require('./accomodation/accomodationRoutes')(db);
+  const messagingRoutes = require('./messaging/messagingRoutes')(db);
 
   router.use('/users', userRoutes);
   router.use('/auth', authRoutes);
-  router.use('/accommodations', accommodationRoutes);
+  router.use('/messaging', messagingRoutes);
+  router.use('/accommodations', accomodationRoutes);
+
 
   return router;
 };
