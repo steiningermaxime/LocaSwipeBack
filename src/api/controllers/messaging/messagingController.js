@@ -1,18 +1,19 @@
 const jwt = require('jsonwebtoken');
 
-exports.createConversation = (req, res, db) => {
+exports.createConversation = async (req, res, db) => {
   const { user1_id, user2_id } = req.body;
   const query = 'INSERT INTO conversations (user1_id, user2_id) VALUES (?, ?)';
-  db.query(query, [user1_id, user2_id], (error, results) => {
-    if (error) {
-      console.error('Erreur lors de la création de la conversation:', error);
-      return res.status(500).send('Erreur lors de la création de la conversation.');
-    }
+  
+  try {
+    const [results] = await db.execute(query, [user1_id, user2_id]);
     res.status(201).json({ id: results.insertId });
-  });
+  } catch (error) {
+    console.error('Erreur lors de la création de la conversation:', error);
+    res.status(500).send('Erreur lors de la création de la conversation.');
+  }
 };
 
-exports.getConversations = (req, res, db) => {
+exports.getConversations = async (req, res, db) => {
   const { userId } = req.params;
   const query = `
     SELECT c.*, 
@@ -24,70 +25,67 @@ exports.getConversations = (req, res, db) => {
     JOIN users u2 ON c.user2_id = u2.id
     WHERE c.user1_id = ? OR c.user2_id = ?
   `;
-  db.query(query, [userId, userId], (error, results) => {
-    if (error) {
-      console.error('Erreur lors de la récupération des conversations:', error);
-      return res.status(500).send('Erreur lors de la récupération des conversations.');
-    }
+  
+  try {
+    const [results] = await db.execute(query, [userId, userId]);
     res.json(results);
-  });
+  } catch (error) {
+    console.error('Erreur lors de la récupération des conversations:', error);
+    res.status(500).send('Erreur lors de la récupération des conversations.');
+  }
 };
 
-exports.sendMessage = (req, res, db) => {
+exports.sendMessage = async (req, res, db) => {
   const { conversation_id, sender_id, content } = req.body;
   const query = 'INSERT INTO messages (conversation_id, sender_id, content) VALUES (?, ?, ?)';
-  db.query(query, [conversation_id, sender_id, content], (error, results) => {
-    if (error) {
-      console.error('Erreur lors de l\'envoi du message:', error);
-      return res.status(500).send('Erreur lors de l\'envoi du message.');
-    }
+  
+  try {
+    const [results] = await db.execute(query, [conversation_id, sender_id, content]);
     res.status(201).json({ id: results.insertId });
-  });
+  } catch (error) {
+    console.error('Erreur lors de l\'envoi du message:', error);
+    res.status(500).send('Erreur lors de l\'envoi du message.');
+  }
 };
 
-exports.getMessages = (req, res, db) => {
-    const { conversationId } = req.params;
-    const query = `
-      SELECT m.*, u.firstname AS sender_firstname, u.lastname AS sender_lastname
-      FROM messages m
-      JOIN users u ON m.sender_id = u.id
-      WHERE m.conversation_id = ?
-    `;
-    db.query(query, [conversationId], (error, results) => {
-      if (error) {
-        console.error('Erreur lors de la récupération des messages:', error);
-        return res.status(500).send('Erreur lors de la récupération des messages.');
-      }
-      res.json(results);
-    });
-  };
+exports.getMessages = async (req, res, db) => {
+  const { conversationId } = req.params;
+  const query = `
+    SELECT m.*, u.firstname AS sender_firstname, u.lastname AS sender_lastname
+    FROM messages m
+    JOIN users u ON m.sender_id = u.id
+    WHERE m.conversation_id = ?
+  `;
   
+  try {
+    const [results] = await db.execute(query, [conversationId]);
+    res.json(results);
+  } catch (error) {
+    console.error('Erreur lors de la récupération des messages:', error);
+    res.status(500).send('Erreur lors de la récupération des messages.');
+  }
+};
 
-exports.getConversationBetweenUsers = (req, res, db) => {
+exports.getConversationBetweenUsers = async (req, res, db) => {
   const { user1_id, user2_id } = req.params;
   const query = `
     SELECT * FROM conversations 
     WHERE (user1_id = ? AND user2_id = ?) OR (user1_id = ? AND user2_id = ?)
   `;
-  db.query(query, [user1_id, user2_id, user2_id, user1_id], (error, results) => {
-    if (error) {
-      console.error('Erreur lors de la récupération de la conversation:', error);
-      return res.status(500).send('Erreur lors de la récupération de la conversation.');
-    }
+  
+  try {
+    const [results] = await db.execute(query, [user1_id, user2_id, user2_id, user1_id]);
     if (results.length === 0) {
       return res.status(404).send('Conversation non trouvée.');
     }
-
+    
     const conversation = results[0];
-
     const messagesQuery = 'SELECT * FROM messages WHERE conversation_id = ?';
-    db.query(messagesQuery, [conversation.id], (msgError, msgResults) => {
-      if (msgError) {
-        console.error('Erreur lors de la récupération des messages:', msgError);
-        return res.status(500).send('Erreur lors de la récupération des messages.');
-      }
-      conversation.messages = msgResults;
-      res.json(conversation);
-    });
-  });
+    const [msgResults] = await db.execute(messagesQuery, [conversation.id]);
+    conversation.messages = msgResults;
+    res.json(conversation);
+  } catch (error) {
+    console.error('Erreur lors de la récupération de la conversation:', error);
+    res.status(500).send('Erreur lors de la récupération de la conversation.');
+  }
 };

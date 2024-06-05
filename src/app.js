@@ -31,20 +31,17 @@ app.use(cors({
 
 app.use(express.json());
 
-const db = mysql.createConnection({
+const pool = mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME
+  database: process.env.DB_NAME,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
 });
 
-db.connect(err => {
-  if (err) {
-    console.error('Erreur de connexion à la base de données:', err);
-    return;
-  }
-  console.log('Connecté à la base de données MySQL');
-});
+const db = pool.promise();
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -61,14 +58,12 @@ app.get('/', (req, res) => {
   res.send('Hello World!');
 });
 
-app.post('/api/messages', (req, res) => {
+app.post('/api/messages', async (req, res) => {
   const { conversation_id, sender_id, content } = req.body;
   const query = 'INSERT INTO messages (conversation_id, sender_id, content) VALUES (?, ?, ?)';
-  db.query(query, [conversation_id, sender_id, content], (error, results) => {
-    if (error) {
-      console.error('Erreur lors de l\'envoi du message:', error);
-      return res.status(500).json({ error: 'Erreur lors de l\'envoi du message.' });
-    }
+
+  try {
+    const [results] = await db.execute(query, [conversation_id, sender_id, content]);
     const newMessageId = results.insertId;
     const fetchMessageQuery = `
       SELECT m.*, u.firstname AS sender_firstname, u.lastname AS sender_lastname
@@ -76,16 +71,14 @@ app.post('/api/messages', (req, res) => {
       JOIN users u ON m.sender_id = u.id
       WHERE m.id = ?
     `;
-    db.query(fetchMessageQuery, [newMessageId], (fetchError, fetchResults) => {
-      if (fetchError) {
-        console.error('Erreur lors de la récupération du message:', fetchError);
-        return res.status(500).json({ error: 'Erreur lors de la récupération du message.' });
-      }
-      const newMessage = fetchResults[0];
-      io.emit('newMessage', newMessage);
-      res.status(201).json(newMessage);
-    });
-  });
+    const [fetchResults] = await db.execute(fetchMessageQuery, [newMessageId]);
+    const newMessage = fetchResults[0];
+    io.emit('newMessage', newMessage);
+    res.status(201).json(newMessage);
+  } catch (error) {
+    console.error('Erreur lors de l\'envoi du message:', error);
+    res.status(500).json({ error: 'Erreur lors de l\'envoi du message.' });
+  }
 });
 
 app.use((err, req, res, next) => {
@@ -110,15 +103,12 @@ io.on('connection', (socket) => {
     console.log('user disconnected');
   });
 
-  socket.on('sendMessage', (message) => {
+  socket.on('sendMessage', async (message) => {
     console.log('Message reçu du client:', message); // Journal de débogage
     const { conversation_id, sender_id, content } = message;
     const query = 'INSERT INTO messages (conversation_id, sender_id, content) VALUES (?, ?, ?)';
-    db.query(query, [conversation_id, sender_id, content], (error, results) => {
-      if (error) {
-        console.error('Erreur lors de l\'envoi du message:', error);
-        return;
-      }
+    try {
+      const [results] = await db.execute(query, [conversation_id, sender_id, content]);
       const newMessageId = results.insertId;
       const fetchMessageQuery = `
         SELECT m.*, u.firstname AS sender_firstname, u.lastname AS sender_lastname
@@ -126,16 +116,13 @@ io.on('connection', (socket) => {
         JOIN users u ON m.sender_id = u.id
         WHERE m.id = ?
       `;
-      db.query(fetchMessageQuery, [newMessageId], (fetchError, fetchResults) => {
-        if (fetchError) {
-          console.error('Erreur lors de la récupération du message:', fetchError);
-          return;
-        }
-        const newMessage = fetchResults[0];
-        console.log('Nouveau message inséré et émis:', newMessage); // Journal de débogage
-        io.emit('newMessage', newMessage);
-      });
-    });
+      const [fetchResults] = await db.execute(fetchMessageQuery, [newMessageId]);
+      const newMessage = fetchResults[0];
+      console.log('Nouveau message inséré et émis:', newMessage); // Journal de débogage
+      io.emit('newMessage', newMessage);
+    } catch (error) {
+      console.error('Erreur lors de l\'envoi du message:', error);
+    }
   });
 });
 

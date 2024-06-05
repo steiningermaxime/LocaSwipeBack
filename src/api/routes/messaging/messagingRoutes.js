@@ -8,7 +8,6 @@ module.exports = (db) => {
     router.post('/messages', (req, res) => messagingController.sendMessage(req, res, db));
     router.get('/messages/:conversationId', (req, res) => messagingController.getMessages(req, res, db));
 
-    // Ajout de la route pour récupérer une conversation spécifique entre deux utilisateurs
     router.get('/conversation/:user1_id/:user2_id', (req, res) => messagingController.getConversationBetweenUsers(req, res, db));
 
     return router;
