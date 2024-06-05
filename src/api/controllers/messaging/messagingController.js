@@ -46,16 +46,22 @@ exports.sendMessage = (req, res, db) => {
 };
 
 exports.getMessages = (req, res, db) => {
-  const { conversationId } = req.params;
-  const query = 'SELECT * FROM messages WHERE conversation_id = ?';
-  db.query(query, [conversationId], (error, results) => {
-    if (error) {
-      console.error('Erreur lors de la récupération des messages:', error);
-      return res.status(500).send('Erreur lors de la récupération des messages.');
-    }
-    res.json(results);
-  });
-};
+    const { conversationId } = req.params;
+    const query = `
+      SELECT m.*, u.firstname AS sender_firstname, u.lastname AS sender_lastname
+      FROM messages m
+      JOIN users u ON m.sender_id = u.id
+      WHERE m.conversation_id = ?
+    `;
+    db.query(query, [conversationId], (error, results) => {
+      if (error) {
+        console.error('Erreur lors de la récupération des messages:', error);
+        return res.status(500).send('Erreur lors de la récupération des messages.');
+      }
+      res.json(results);
+    });
+  };
+  
 
 exports.getConversationBetweenUsers = (req, res, db) => {
   const { user1_id, user2_id } = req.params;
