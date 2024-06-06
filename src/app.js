@@ -61,7 +61,14 @@ server.listen(port, () => {
 // Socket.IO configuration
 const io = socketIo(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true); // Allow requests with no origin, like mobile apps or curl requests
+      if (allowedOrigins.indexOf(origin) === -1) {
+        const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+        return callback(new Error(msg), false);
+      }
+      return callback(null, true);
+    },
     methods: ['GET', 'POST'],
     allowedHeaders: ['Content-Type'],
     credentials: true,
