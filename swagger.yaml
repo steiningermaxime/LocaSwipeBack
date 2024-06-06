@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: LOCASWIPE API
-  description: Projet MyDigtialProject LocaSwipe API
+  description: Projet MyDigitalProject LocaSwipe API
   version: "1.0"
 servers:
   - url: http://localhost:3000/api
@@ -37,7 +37,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/User"
+              $ref: "#/components/schemas/CreateUser"
       responses:
         "201":
           description: User created
@@ -135,7 +135,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/User"
+              $ref: "#/components/schemas/RegisterUser"
       responses:
         "201":
           description: User registered
@@ -181,8 +181,62 @@ paths:
           description: Like added successfully
         "400":
           description: User ID is required
+        "409":
+          description: User has already liked this accommodation
         "500":
           description: Error while adding like
+
+  /accommodations/{accommodationId}/likes:
+    get:
+      tags:
+        - Accommodations
+      summary: Retrieve users who liked an accommodation
+      parameters:
+        - name: accommodationId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: A list of users who liked the accommodation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+        "500":
+          description: Error while retrieving likes
+
+  /accommodations/accept-tenant:
+    post:
+      tags:
+        - Accommodations
+      summary: Accept a tenant for an accommodation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ownerId:
+                  type: integer
+                  description: ID of the owner
+                tenantId:
+                  type: integer
+                  description: ID of the tenant
+                accommodationId:
+                  type: integer
+                  description: ID of the accommodation
+      responses:
+        "201":
+          description: Tenant accepted successfully
+        "403":
+          description: Forbidden operation (either not the owner or tenant did not like the accommodation)
+        "500":
+          description: Error while accepting the tenant
 
 components:
   schemas:
@@ -191,20 +245,64 @@ components:
       properties:
         id:
           type: integer
-        name:
+        firstname:
+          type: string
+        lastname:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        phone:
+          type: string
+        avatar:
+          type: string
+    CreateUser:
+      type: object
+      properties:
+        firstname:
+          type: string
+        lastname:
           type: string
         email:
           type: string
         phone:
+          type: string
+    RegisterUser:
+      type: object
+      properties:
+        firstname:
+          type: string
+        lastname:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        roleType:
           type: string
     Accommodation:
       type: object
       properties:
         id:
           type: integer
-        name:
+        adress:
           type: string
-        location:
+        city:
           type: string
-        available:
+        rent:
+          type: integer
+        disponibility:
           type: boolean
+        id_user:
+          type: integer
+        image:
+          type: string
+        surface_area:
+          type: number
+        description:
+          type: string
+        property_type:
+          type: string
+        likes_count:
+          type: integer
