@@ -1,15 +1,16 @@
 const express = require('express');
 const router = express.Router();
 
-module.exports = (db) => {
+module.exports = (db, io) => {
   const userRoutes = require('./users/userRoutes')(db);
   const authRoutes = require('./auth/authRoutes')(db);
-  const accommodationController = require('../controllers/accomodation/accomodationController');
+  const accomodationRoutes = require('./accomodation/accomodationRoutes')(db, io);
+  const messagingRoutes = require('./messaging/messagingRoutes')(db);
 
   router.use('/users', userRoutes);
   router.use('/auth', authRoutes);
-
-  router.get('/accommodations', (req, res) => accommodationController.getAllAccommodations(req, res, db));
+  router.use('/messaging', messagingRoutes);
+  router.use('/accommodations', accomodationRoutes);
 
   return router;
 };
