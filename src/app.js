@@ -7,24 +7,23 @@ const dotenv = require('dotenv');
 const swaggerUi = require('swagger-ui-express');
 const YAML = require('yamljs');
 
-const swaggerDocument = YAML.load('./swagger.yaml');
 dotenv.config();
 
+const swaggerDocument = YAML.load('./swagger.yaml');
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server, {
-  cors: {
-    origin: 'http://localhost:5173',
-    methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type'],
-    credentials: true,
-  },
-});
 
-const port = process.env.PORT || 3000;
+const allowedOrigins = process.env.ALLOWED_ORIGINS.split(',');
 
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true); // Allow requests with no origin, like mobile apps or curl requests
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
   methods: ['GET', 'POST'],
   allowedHeaders: ['Content-Type'],
   credentials: true,
@@ -44,7 +43,7 @@ const pool = mysql.createPool({
 
 const db = pool.promise();
 
-const indexRoutes = require('./api/routes/routes')(db, io);
+const indexRoutes = require('./api/routes/routes')(db, socketIo);
 app.use('/api', indexRoutes);
 
 app.use('/api-locaswipe', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
@@ -53,11 +52,22 @@ app.get('/', (req, res) => {
   res.send('Hello World!');
 });
 
+const port = process.env.PORT || 3000;
+
 server.listen(port, () => {
-  console.log(`App listening at http://localhost:${port}`);
+  console.log(`App listening at http://207.154.192.137:${port}`);
 });
 
 // Socket.IO configuration
+const io = socketIo(server, {
+  cors: {
+    origin: allowedOrigins,
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type'],
+    credentials: true,
+  },
+});
+
 io.on('connection', (socket) => {
   // No logging for user connection and disconnection
 
