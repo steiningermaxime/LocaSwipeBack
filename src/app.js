@@ -6,7 +6,6 @@ const mysql = require('mysql2');
 const dotenv = require('dotenv');
 const swaggerUi = require('swagger-ui-express');
 const YAML = require('yamljs');
-const winston = require('winston');
 
 const swaggerDocument = YAML.load('./swagger.yaml');
 dotenv.config();
@@ -55,32 +54,19 @@ app.get('/', (req, res) => {
 });
 
 server.listen(port, () => {
-  winston.info(`App listening at http://localhost:${port}`);
-});
-
-// Configuration de Winston
-const logger = winston.createLogger({
-  level: 'info',
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.printf(({ timestamp, level, message }) => `${timestamp} ${level}: ${message}`)
-  ),
-  transports: [
-    new winston.transports.Console(),
-    new winston.transports.File({ filename: 'combined.log' }),
-  ],
+  console.log(`App listening at http://localhost:${port}`);
 });
 
 // Socket.IO configuration
 io.on('connection', (socket) => {
-  logger.info('A user connected');
+  // No logging for user connection and disconnection
 
   socket.on('disconnect', () => {
-    logger.info('User disconnected');
+    // No logging for user disconnection
   });
 
   socket.on('sendMessage', async (message) => {
-    logger.info('Message reçu du client:', message);
+    console.log('Message reçu du client:', message);
     const { conversation_id, sender_id, content } = message;
     const query = 'INSERT INTO messages (conversation_id, sender_id, content) VALUES (?, ?, ?)';
     try {
@@ -94,10 +80,10 @@ io.on('connection', (socket) => {
       `;
       const [fetchResults] = await db.execute(fetchMessageQuery, [newMessageId]);
       const newMessage = fetchResults[0];
-      logger.info('Nouveau message inséré et émis:', newMessage);
+      console.log('Nouveau message inséré et émis:', newMessage);
       io.emit('newMessage', newMessage);
     } catch (error) {
-      logger.error('Erreur lors de l\'envoi du message:', error);
+      console.error('Erreur lors de l\'envoi du message:', error);
     }
   });
 });
