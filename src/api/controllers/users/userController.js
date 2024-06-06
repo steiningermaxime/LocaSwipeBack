@@ -46,21 +46,44 @@ exports.getAllUsers = async (req, res, db) => {
 
 exports.getUserById = async (req, res, db) => {
     const { id } = req.params;
-    const query = `
+    const userQuery = `
         SELECT u.id, u.firstname, u.lastname, u.email, u.birthdate, u.avatar, r.type AS role
         FROM users u
         LEFT JOIN attribute a ON u.id = a.id_user
         LEFT JOIN role r ON a.id_role = r.id
         WHERE u.id = ?
     `;
+
     try {
-        const [results] = await db.execute(query, [id]);
-        if (results.length === 0) {
+        const [userResults] = await db.execute(userQuery, [id]);
+        if (userResults.length === 0) {
             return res.status(404).send("Utilisateur non trouvé.");
         }
-        res.json(results[0]);
+
+        const user = userResults[0];
+        if (user.role === 'owner') {
+            const accommodationsQuery = `
+                SELECT 
+                    a.id, 
+                    a.adress, 
+                    a.city, 
+                    a.rent, 
+                    a.disponibility, 
+                    a.image, 
+                    a.surface_area, 
+                    a.description, 
+                    a.property_type,
+                    (SELECT COUNT(*) FROM likes l WHERE l.id_accommodation = a.id) AS likes_count
+                FROM accommodations a
+                WHERE a.id_user = ?
+            `;
+            const [accommodationsResults] = await db.execute(accommodationsQuery, [id]);
+            user.accommodations = accommodationsResults;
+        }
+
+        res.json(user);
     } catch (error) {
-        console.error('Erreur lors de la récupération de l’utilisateur et de son rôle:', error);
+        console.error('Erreur lors de la récupération de l’utilisateur et de ses propriétés:', error);
         res.status(500).send('Erreur lors de la récupération de l’utilisateur.');
     }
 };
