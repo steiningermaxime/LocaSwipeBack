@@ -1,5 +1,6 @@
 const express = require('express');
-const http = require('http');
+const https = require('https');
+const fs = require('fs');
 const socketIo = require('socket.io');
 const cors = require('cors');
 const mysql = require('mysql2');
@@ -11,7 +12,12 @@ dotenv.config();
 
 const swaggerDocument = YAML.load('./swagger.yaml');
 const app = express();
-const server = http.createServer(app);
+
+// Load SSL certificates
+const httpsOptions = {
+  key: fs.readFileSync('/root/key.pem'),
+  cert: fs.readFileSync('/root/cert.pem')
+};
 
 const allowedOrigins = process.env.ALLOWED_ORIGINS.split(',');
 
@@ -54,12 +60,15 @@ app.get('/', (req, res) => {
 
 const port = process.env.PORT || 3000;
 
-server.listen(port, () => {
-  console.log(`App listening at http://207.154.192.137:${port}`);
+// Create HTTPS server
+const httpsServer = https.createServer(httpsOptions, app);
+
+httpsServer.listen(port, () => {
+  console.log(`App listening at https://locaswipe.fr:${port}`);
 });
 
 // Socket.IO configuration
-const io = socketIo(server, {
+const io = socketIo(httpsServer, {
   cors: {
     origin: function (origin, callback) {
       if (!origin) return callback(null, true); // Allow requests with no origin
