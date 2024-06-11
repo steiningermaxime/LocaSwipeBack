@@ -23,6 +23,9 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS.split(',');
 
 app.use(cors({
   origin: function (origin, callback) {
+    // Log de l'origine de la requête pour le diagnostic
+    console.log('Origin of request:', origin);
+    
     if (!origin) return callback(null, true); // Allow requests with no origin
     if (allowedOrigins.indexOf(origin) === -1) {
       const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
@@ -71,6 +74,9 @@ httpsServer.listen(port, () => {
 const io = socketIo(httpsServer, {
   cors: {
     origin: function (origin, callback) {
+      // Log de l'origine de la requête pour le diagnostic
+      console.log('Origin of request (Socket.IO):', origin);
+      
       if (!origin) return callback(null, true); // Allow requests with no origin
       if (allowedOrigins.indexOf(origin) === -1) {
         const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
