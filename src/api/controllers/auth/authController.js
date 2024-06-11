@@ -29,18 +29,58 @@ exports.register = async (req, res, db) => {
 
 exports.login = async (req, res, db) => {
   const { email, password } = req.body;
+
+  // Log de la requête entrante
+  console.log('Login request received:', { email, password });
+
   try {
+    // Log avant l'exécution de la requête SQL
+    console.log('Executing SQL query to find user by email:', email);
+    
     const [results] = await db.execute(
       'SELECT users.id, users.email, users.password, role.type AS role FROM users INNER JOIN attribute ON users.id = attribute.id_user INNER JOIN role ON attribute.id_role = role.id WHERE users.email = ?', 
       [email]
     );
-    if (results.length === 0 || !(await bcrypt.compare(password, results[0].password))) {
+    
+    // Log des résultats de la requête SQL
+    console.log('SQL query results:', results);
+
+    if (results.length === 0) {
+      console.log('No user found with this email:', email);
       return res.status(401).send("Email ou mot de passe incorrect.");
     }
-    const { id, email: userEmail, password: userPassword, role } = results[0];
+
+    const user = results[0];
+    
+    // Log avant la comparaison des mots de passe
+    console.log('Comparing passwords for user:', user);
+
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    
+    // Log du résultat de la comparaison des mots de passe
+    console.log('Password match:', passwordMatch);
+
+    if (!passwordMatch) {
+      console.log('Incorrect password for user:', email);
+      return res.status(401).send("Email ou mot de passe incorrect.");
+    }
+
+    const { id, email: userEmail, role } = user;
+    
+    // Log avant la génération du token JWT
+    console.log('Generating JWT for user:', { id, role });
+
     const token = jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: '24h' });
+    
+    // Log du token généré
+    console.log('JWT generated:', token);
+
+    // Log avant l'envoi de la réponse réussie
+    console.log('Login successful for user:', { id, email: userEmail, role });
+
     res.status(200).json({ message: "Connexion réussie.", token, role, id });
   } catch (error) {
+    // Log de l'erreur attrapée
     console.error('Erreur lors de la connexion:', error);
     res.status(500).send('Erreur lors de la connexion.');
   }
