@@ -65,7 +65,7 @@ exports.getUserById = async (req, res, db) => {
             const accommodationsQuery = `
                 SELECT 
                     a.id, 
-                    a.adress, 
+                    a.address, 
                     a.city, 
                     a.rent, 
                     a.disponibility, 

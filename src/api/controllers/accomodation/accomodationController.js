@@ -1,6 +1,6 @@
 const getAllAccommodations = async (req, res, db) => {
   const query = `
-    SELECT id, adress, city, rent, disponibility, id_user, image, surface_area, description, property_type
+    SELECT id, address, city, rent, disponibility, id_user, image, surface_area, description, property_type
     FROM accommodations
   `;
 

@@ -286,7 +286,7 @@ components:
       properties:
         id:
           type: integer
-        adress:
+        address:
           type: string
         city:
           type: string
