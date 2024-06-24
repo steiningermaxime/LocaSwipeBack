@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const authenticateJWT = require('../../middleware/authenticateJWT');
 
 module.exports = (db, io) => {
   const userRoutes = require('./users/userRoutes')(db);
@@ -7,10 +8,13 @@ module.exports = (db, io) => {
   const accomodationRoutes = require('./accomodation/accomodationRoutes')(db, io);
   const messagingRoutes = require('./messaging/messagingRoutes')(db);
 
-  router.use('/users', userRoutes);
+  // Auth routes
   router.use('/auth', authRoutes);
-  router.use('/messaging', messagingRoutes);
-  router.use('/accommodations', accomodationRoutes);
+
+  // Protected routes
+  router.use('/users', authenticateJWT, userRoutes);
+  router.use('/messaging', authenticateJWT, messagingRoutes);
+  router.use('/accommodations', authenticateJWT, accomodationRoutes);
 
   return router;
 };
