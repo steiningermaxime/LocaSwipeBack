@@ -1,5 +1,5 @@
 const express = require('express');
-const http = require('http'); // Ajout de l'importation du module http
+const https = require('https');
 const fs = require('fs');
 const socketIo = require('socket.io');
 const cors = require('cors');
@@ -13,11 +13,11 @@ dotenv.config();
 const swaggerDocument = YAML.load('./swagger.yaml');
 const app = express();
 
-// // Load SSL certificates
-// const httpsOptions = {
-//   key: fs.readFileSync('/root/key.pem'),
-//   cert: fs.readFileSync('/root/cert.pem')
-// };
+// Load SSL certificates
+const httpsOptions = {
+  key: fs.readFileSync('/root/key.pem'),
+  cert: fs.readFileSync('/root/cert.pem')
+};
 
 const allowedOrigins = process.env.ALLOWED_ORIGINS.split(',');
 
@@ -60,11 +60,15 @@ app.get('/', (req, res) => {
 
 const port = process.env.PORT || 3000;
 
-// Création du serveur HTTP
-const server = http.createServer(app);
+// Create HTTPS server
+const httpsServer = https.createServer(httpsOptions, app);
+
+httpsServer.listen(port, () => {
+  console.log(`App listening at https://locaswipe.fr:${port}`);
+});
 
 // Socket.IO configuration
-const io = socketIo(server, {
+const io = socketIo(httpsServer, {
   cors: {
     origin: function (origin, callback) {
       if (!origin) return callback(null, true); // Allow requests with no origin
@@ -108,8 +112,4 @@ io.on('connection', (socket) => {
       console.error('Erreur lors de l\'envoi du message:', error);
     }
   });
-});
-
-server.listen(port, () => {
-  console.log(`App listening at http://localhost:${port}`);
 });
