@@ -7,6 +7,8 @@ module.exports = (db, io) => {
   router.post('/:id/like', (req, res) => accommodationController.likeAccommodation(req, res, db, io));
   router.get('/:accommodationId/likes', (req, res) => accommodationController.getLikesForAccommodation(req, res, db));
   router.post('/accept-tenant', (req, res) => accommodationController.acceptTenant(req, res, db, io));
+  router.delete('/skip-tenant/:ownerId/:tenantId/:accommodationId', (req, res) => accommodationController.skipTenant(req, res, db, io));
 
   return router;
 };
+  

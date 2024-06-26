@@ -238,6 +238,35 @@ paths:
         "500":
           description: Error while accepting the tenant
 
+  /accommodations/skip-tenant/{ownerId}/{tenantId}/{accommodationId}:
+    delete:
+      tags:
+        - Accommodations
+      summary: Skip a tenant for an accommodation
+      parameters:
+        - name: ownerId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: accommodationId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Tenant skipped successfully
+        "403":
+          description: Forbidden operation (not the owner)
+        "500":
+          description: Error while skipping the tenant
+
 components:
   schemas:
     User:

@@ -36,6 +36,7 @@ const getAllAccommodationsService = async (db) => {
   };
   
   const acceptTenantService = async (db, ownerId, tenantId, accommodationId) => {
+    // Vérifier si le propriétaire possède la propriété
     const checkQuery = `
       SELECT * FROM accommodations
       WHERE id = ? AND id_user = ?
@@ -44,7 +45,8 @@ const getAllAccommodationsService = async (db) => {
     if (checkResults.length === 0) {
       throw new Error('Vous ne possédez pas cette propriété.');
     }
-  
+
+    // Vérifier si le locataire a aimé la propriété
     const likeCheckQuery = `
       SELECT * FROM likes
       WHERE id_accommodation = ? AND id_user = ?
@@ -53,26 +55,66 @@ const getAllAccommodationsService = async (db) => {
     if (likeCheckResults.length === 0) {
       throw new Error('Le locataire n\'a pas aimé cette propriété.');
     }
-  
+
+    // Vérifier si une conversation existe déjà
+    const conversationCheckQuery = `
+      SELECT * FROM conversations
+      WHERE (user1_id = ? AND user2_id = ?) OR (user1_id = ? AND user2_id = ?)
+    `;
+    const [conversationCheckResults] = await db.execute(conversationCheckQuery, [ownerId, tenantId, tenantId, ownerId]);
+    if (conversationCheckResults.length > 0) {
+      return { message: 'Le locataire a déjà été accepté.' }; // Renvoie une réponse indiquant que le locataire a déjà été accepté
+    }
+
+    // Créer une nouvelle conversation
     const conversationQuery = `
       INSERT INTO conversations (user1_id, user2_id)
       VALUES (?, ?)
     `;
     const [conversationResults] = await db.execute(conversationQuery, [ownerId, tenantId]);
-  
+
+    // Supprimer le like après avoir accepté le locataire
     const deleteLikeQuery = `
       DELETE FROM likes
       WHERE id_accommodation = ? AND id_user = ?
     `;
     await db.execute(deleteLikeQuery, [accommodationId, tenantId]);
-  
+
     return { id: conversationResults.insertId };
-  };
+};
+const skipTenantService = async (db, ownerId, tenantId, accommodationId) => {
+  const checkQuery = `
+    SELECT * FROM accommodations
+    WHERE id = ? AND id_user = ?
+  `;
+  const [checkResults] = await db.execute(checkQuery, [accommodationId, ownerId]);
+  if (checkResults.length === 0) {
+    throw new Error('Vous ne possédez pas cette propriété.');
+  }
+
+  const deleteLikeQuery = `
+    DELETE FROM likes
+    WHERE id_accommodation = ? AND id_user = ?
+  `;
+  await db.execute(deleteLikeQuery, [accommodationId, tenantId]);
+
+  return { message: 'Tenant skipped successfully' };
+};
+
+module.exports = {
+  getAllAccommodationsService,
+  likeAccommodationService,
+  getLikesForAccommodationService,
+  acceptTenantService,
+  skipTenantService
+};
+
   
   module.exports = {
     getAllAccommodationsService,
     likeAccommodationService,
     getLikesForAccommodationService,
-    acceptTenantService
+    acceptTenantService,
+    skipTenantService
   };
   

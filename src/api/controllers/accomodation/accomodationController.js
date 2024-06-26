@@ -2,7 +2,8 @@ const {
   getAllAccommodationsService,
   likeAccommodationService,
   getLikesForAccommodationService,
-  acceptTenantService
+  acceptTenantService,
+  skipTenantService
 } = require('../../services/accommodations');
 
 const getAllAccommodations = async (req, res, db) => {
@@ -53,8 +54,11 @@ const acceptTenant = async (req, res, db, io) => {
 
   try {
     const result = await acceptTenantService(db, ownerId, tenantId, accommodationId);
+    if (result.message) {
+      return res.status(200).json(result); 
+    }
     io.emit('tenantAccepted', { accommodationId, tenantId });
-    res.status(201).json(result);
+    res.status(204).send(); // Utilisation du statut 204 No Content pour indiquer le succès sans corps de réponse
   } catch (error) {
     if (error.message === 'Vous ne possédez pas cette propriété.' || error.message === 'Le locataire n\'a pas aimé cette propriété.') {
       return res.status(403).send(error.message);
@@ -64,9 +68,25 @@ const acceptTenant = async (req, res, db, io) => {
   }
 };
 
+const skipTenant = async (req, res, db, io) => {
+  const { ownerId, tenantId, accommodationId } = req.params;
+
+  try {
+    const result = await skipTenantService(db, ownerId, tenantId, accommodationId);
+    res.status(200).json(result);
+  } catch (error) {
+    if (error.message === 'Vous ne possédez pas cette propriété.') {
+      return res.status(403).send(error.message);
+    }
+    console.error('Erreur lors du skip du locataire:', error);
+    res.status(500).send('Erreur lors du skip du locataire.');
+  }
+};
+
 module.exports = {
   getAllAccommodations,
   likeAccommodation,
   getLikesForAccommodation,
-  acceptTenant
+  acceptTenant,
+  skipTenant
 };
