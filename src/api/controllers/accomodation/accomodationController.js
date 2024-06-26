@@ -53,8 +53,11 @@ const acceptTenant = async (req, res, db, io) => {
 
   try {
     const result = await acceptTenantService(db, ownerId, tenantId, accommodationId);
+    if (result.message) {
+      return res.status(200).json(result); 
+    }
     io.emit('tenantAccepted', { accommodationId, tenantId });
-    res.status(201).json(result);
+    res.status(204).send(); // Utilisation du statut 204 No Content pour indiquer le succès sans corps de réponse
   } catch (error) {
     if (error.message === 'Vous ne possédez pas cette propriété.' || error.message === 'Le locataire n\'a pas aimé cette propriété.') {
       return res.status(403).send(error.message);
@@ -63,6 +66,8 @@ const acceptTenant = async (req, res, db, io) => {
     res.status(500).send('Erreur lors de l\'acceptation du locataire.');
   }
 };
+
+
 
 module.exports = {
   getAllAccommodations,
