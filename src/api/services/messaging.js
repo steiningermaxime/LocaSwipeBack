@@ -33,6 +33,7 @@ const getMessagesService = async (db, conversationId) => {
     FROM messages m
     JOIN users u ON m.sender_id = u.id
     WHERE m.conversation_id = ?
+    ORDER BY m.created_at ASC
   `;
   const [results] = await db.execute(query, [conversationId]);
   return results;

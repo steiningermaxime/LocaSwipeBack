@@ -82,12 +82,39 @@ const getAllAccommodationsService = async (db) => {
 
     return { id: conversationResults.insertId };
 };
+const skipTenantService = async (db, ownerId, tenantId, accommodationId) => {
+  const checkQuery = `
+    SELECT * FROM accommodations
+    WHERE id = ? AND id_user = ?
+  `;
+  const [checkResults] = await db.execute(checkQuery, [accommodationId, ownerId]);
+  if (checkResults.length === 0) {
+    throw new Error('Vous ne possédez pas cette propriété.');
+  }
+
+  const deleteLikeQuery = `
+    DELETE FROM likes
+    WHERE id_accommodation = ? AND id_user = ?
+  `;
+  await db.execute(deleteLikeQuery, [accommodationId, tenantId]);
+
+  return { message: 'Tenant skipped successfully' };
+};
+
+module.exports = {
+  getAllAccommodationsService,
+  likeAccommodationService,
+  getLikesForAccommodationService,
+  acceptTenantService,
+  skipTenantService
+};
 
   
   module.exports = {
     getAllAccommodationsService,
     likeAccommodationService,
     getLikesForAccommodationService,
-    acceptTenantService
+    acceptTenantService,
+    skipTenantService
   };
   
